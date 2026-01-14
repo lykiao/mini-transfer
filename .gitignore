@@ -51,6 +51,12 @@ Thumbs.db
 .DS_Store
 *.log
 
+# Screenshots in root (keep screenshots folder)
+ScreenShot_*.png
+screen_*.png
+screenshot_*.png
+IMG_*.png
+
 # Test coverage
 coverage/
 .nyc_output

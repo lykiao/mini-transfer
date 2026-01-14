@@ -2,6 +2,17 @@
 
 一个轻量级的跨平台桌面应用程序，用于在 PC 和移动设备之间进行文件传输。
 
+## 界面预览
+
+### 桌面应用
+![桌面应用](screenshots/screenshot.png)
+
+### 移动端 - 文件上传
+![文件上传](screenshots/mobile-upload.png)
+
+### 移动端 - 文件浏览
+![文件浏览](screenshots/mobile-files.png)
+
 ## 项目概述
 
 **技术栈：**
