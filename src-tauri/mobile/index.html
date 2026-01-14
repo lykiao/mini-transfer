@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>迷你传输助手</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            padding-bottom: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .upload-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        .upload-btn:active {
+            background: #0051D5;
+        }
+        #fileInput {
+            display: none;
+        }
+
+        /* Floating upload status button */
+        .upload-status-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            background: #007AFF;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 99;
+        }
+        .upload-status-btn.show {
+            display: flex;
+        }
+        .upload-status-btn:active {
+            transform: scale(0.95);
+        }
+        .upload-status-count {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #FF3B30;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        .upload-status-icon {
+            font-size: 24px;
+            color: white;
+        }
+
+        /* Upload Progress Panel */
+        .upload-progress-panel {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            padding: 16px;
+            min-width: 300px;
+            max-width: 90vw;
+            max-height: 70vh;
+            z-index: 200;
+        }
+        .upload-progress-panel.show {
+            display: block;
+        }
+        .file-list {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .file-item:last-child {
+            border-bottom: none;
+        }
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            background: #E8F4FF;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 20px;
+        }
+        .file-info {
+            flex: 1;
+        }
+        .file-name {
+            font-size: 14px;
+            color: #333;
+        }
+        .file-size {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: none;
+            z-index: 1000;
+        }
+
+        /* Overlay */
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 150;
+        }
+        .overlay.show {
+            display: block;
+        }
+
+        /* Upload Progress Panel */
+        .upload-progress-panel {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            padding: 16px;
+            min-width: 300px;
+            max-width: 90vw;
+            max-height: 70vh;
+            z-index: 200;
+            overflow: hidden;
+        }
+        .upload-progress-panel.show {
+            display: block;
+        }
+        .upload-progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .upload-progress-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+        .upload-progress-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #999;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+        }
+        .upload-progress-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .upload-progress-item {
+            margin-bottom: 12px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .upload-file-name {
+            font-size: 13px;
+            color: #333;
+            margin-bottom: 6px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .upload-file-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 6px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: #007AFF;
+            transition: width 0.3s ease;
+        }
+        .progress-bar-fill.complete {
+            background: #34C759;
+        }
+        .progress-bar-fill.error {
+            background: #FF3B30;
+        }
+        .upload-status-icon {
+            font-size: 12px;
+        }
+
+        /* Upload History */
+        .history-panel {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 100%;
+            max-width: 400px;
+            height: 100%;
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            z-index: 250;
+            overflow-y: auto;
+        }
+        .history-panel.show {
+            display: block;
+        }
+        .history-header {
+            padding: 16px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 10;
+        }
+        .history-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .history-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #666;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+        }
+        .history-list {
+            padding: 16px;
+        }
+        .history-item {
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .history-file-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .history-file-info {
+            font-size: 12px;
+            color: #666;
+        }
+        .history-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+        .clear-history-btn {
+            width: 100%;
+            padding: 12px;
+            background: #FF3B30;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-top: 16px;
+            cursor: pointer;
+        }
+        .clear-history-btn:active {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📁 文件传输</h1>
+        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+            📤 发送文件到电脑
+        </button>
+        <input type="file" id="fileInput" multiple onchange="handleFiles(this.files)">
+        <div id="fileList" class="file-list">
+            <div class="loading">加载中...</div>
+        </div>
+    </div>
+    <div id="toast" class="toast"></div>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay" onclick="closeProgressPanel()"></div>
+
+    <!-- Floating upload status button -->
+    <div class="upload-status-btn" id="uploadStatusBtn" onclick="toggleProgressPanel()">
+        <span class="upload-status-icon">📤</span>
+        <span class="upload-status-count" id="uploadStatusCount">0</span>
+    </div>
+
+    <!-- Upload Progress Panel -->
+    <div class="upload-progress-panel" id="uploadProgressPanel">
+        <div class="upload-progress-header">
+            <span class="upload-progress-title">上传队列</span>
+            <button class="upload-progress-close" onclick="closeProgressPanel()">&times;</button>
+        </div>
+        <div class="upload-progress-list" id="uploadProgressList">
+            <div class="empty" style="padding: 20px; text-align: center; color: #999; font-size: 13px;">
+                暂无上传任务
+            </div>
+        </div>
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee;">
+            <button class="upload-btn" style="font-size: 14px; padding: 10px;" onclick="toggleHistoryFromPanel()">
+                查看历史记录
+            </button>
+        </div>
+    </div>
+
+    <!-- Upload History Panel -->
+    <div class="history-panel" id="historyPanel">
+        <div class="history-header">
+            <span class="history-title">上传历史</span>
+            <button class="history-close" onclick="toggleHistory()">&times;</button>
+        </div>
+        <div class="history-list" id="historyList">
+            <div class="history-empty">暂无上传记录</div>
+        </div>
+        <div style="padding: 16px;">
+            <button class="clear-history-btn" onclick="clearHistory()">清空历史</button>
+        </div>
+    </div>
+
+    <script>
+        const CHUNK_SIZE = 1024 * 1024; // 1MB chunks
+        const MAX_CONCURRENT_UPLOADS = 3; // Max 3 files uploading at the same time
+        let uploadQueue = [];
+        let uploadHistory = JSON.parse(localStorage.getItem('uploadHistory') || '[]');
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.style.display = 'block';
+            setTimeout(() => toast.style.display = 'none', 2000);
+        }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function getIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const icons = {
+                'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️', 'gif': '🖼️', 'webp': '🖼️',
+                'mp4': '🎬', 'mov': '🎬', 'avi': '🎬',
+                'mp3': '🎵', 'wav': '🎵', 'flac': '🎵',
+                'pdf': '📄', 'doc': '📄', 'docx': '📄', 'txt': '📄',
+                'zip': '📦', 'rar': '📦', '7z': '📦'
+            };
+            return icons[ext] || '📄';
+        }
+
+        async function handleFiles(files) {
+            if (!files || files.length === 0) return;
+
+            const fileArray = Array.from(files);
+            showToast(`开始上传 ${fileArray.length} 个文件`);
+
+            // Upload files concurrently with a limit
+            const chunks = [];
+            for (let i = 0; i < fileArray.length; i += MAX_CONCURRENT_UPLOADS) {
+                const chunk = fileArray.slice(i, i + MAX_CONCURRENT_UPLOADS);
+                chunks.push(chunk);
+            }
+
+            // Upload each chunk concurrently
+            for (const chunk of chunks) {
+                await Promise.all(chunk.map(file => uploadFile(file)));
+            }
+
+            // Clear input after all uploads complete
+            document.getElementById('fileInput').value = '';
+            showToast(`所有文件已上传完成`);
+        }
+
+        async function uploadFile(file) {
+            if (!file) return;
+
+            const uploadId = Date.now().toString();
+            const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+            const isChunked = file.size > 5 * 1024 * 1024; // Use chunks for files > 5MB
+
+            const uploadItem = {
+                id: uploadId,
+                filename: file.name,
+                size: file.size,
+                chunks: totalChunks,
+                uploadedChunks: 0,
+                status: 'uploading',
+                timestamp: new Date().toISOString()
+            };
+
+            uploadQueue.unshift(uploadItem);
+            updateUploadProgress();
+            showToast(`开始上传: ${file.name}`);
+
+            try {
+                if (isChunked) {
+                    await uploadInChunks(file, uploadItem);
+                } else {
+                    await uploadDirectly(file, uploadItem);
+                }
+
+                // Add to history
+                addToHistory(uploadItem);
+            } catch (e) {
+                console.error('Upload error:', e);
+                uploadItem.status = 'error';
+                showToast('上传失败: ' + e.message);
+            }
+
+            updateUploadProgress();
+            loadFiles();
+        }
+
+        async function uploadDirectly(file, uploadItem) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await res.json();
+
+            if (res.ok && result.success) {
+                uploadItem.uploadedChunks = uploadItem.chunks;
+                uploadItem.status = 'complete';
+                updateUploadProgress();
+                showToast('上传成功');
+            } else {
+                throw new Error(result.error || '上传失败');
+            }
+        }
+
+        async function uploadInChunks(file, uploadItem) {
+            const totalChunks = uploadItem.chunks;
+
+            for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+                const start = chunkIndex * CHUNK_SIZE;
+                const end = Math.min(start + CHUNK_SIZE, file.size);
+                const chunk = file.slice(start, end);
+
+                const formData = new FormData();
+                formData.append('file', chunk);
+                formData.append('filename', file.name);
+                formData.append('chunkIndex', chunkIndex.toString());
+                formData.append('totalChunks', totalChunks.toString());
+
+                // Add custom headers
+                const res = await fetch('/api/upload/chunk', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Chunk-Index': chunkIndex.toString(),
+                        'X-Total-Chunks': totalChunks.toString(),
+                        'X-File-Name': file.name
+                    }
+                });
+
+                const result = await res.json();
+
+                if (!res.ok || !result.success) {
+                    throw new Error(result.error || '分片上传失败');
+                }
+
+                uploadItem.uploadedChunks = chunkIndex + 1;
+                updateUploadProgress();
+            }
+
+            // Complete upload
+            const completeRes = await fetch('/api/upload/complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: file.name,
+                    totalChunks: totalChunks
+                })
+            });
+
+            const completeResult = await completeRes.json();
+
+            if (completeRes.ok && completeResult.success) {
+                uploadItem.status = 'complete';
+                showToast('上传成功');
+            } else {
+                throw new Error(completeResult.error || '合并文件失败');
+            }
+        }
+
+        function updateUploadProgress() {
+            const list = document.getElementById('uploadProgressList');
+            const statusBtn = document.getElementById('uploadStatusBtn');
+            const statusCount = document.getElementById('uploadStatusCount');
+            const activeUploads = uploadQueue.filter(u => u.status === 'uploading' || u.status === 'complete');
+
+            // Show/hide floating button
+            if (activeUploads.length > 0) {
+                statusBtn.classList.add('show');
+                statusCount.textContent = activeUploads.length.toString();
+            } else {
+                statusBtn.classList.remove('show');
+            }
+
+            if (activeUploads.length === 0) {
+                list.innerHTML = '<div class="empty" style="padding: 20px; text-align: center; color: #999; font-size: 13px;">暂无上传任务</div>';
+                return;
+            }
+
+            list.innerHTML = activeUploads.map(item => {
+                const progress = Math.round((item.uploadedChunks / item.chunks) * 100);
+                const statusIcon = item.status === 'complete' ? '✓' : (item.status === 'error' ? '✗' : '↑');
+                const statusClass = item.status === 'complete' ? 'complete' : (item.status === 'error' ? 'error' : '');
+
+                return `
+                    <div class="upload-progress-item">
+                        <div class="upload-file-name">${item.filename}</div>
+                        <div class="upload-file-info">
+                            <span>${formatSize(item.size)}</span>
+                            <span class="upload-status-icon">${statusIcon} ${progress}%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill ${statusClass}" style="width: ${progress}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleProgressPanel() {
+            const panel = document.getElementById('uploadProgressPanel');
+            const overlay = document.getElementById('overlay');
+            panel.classList.toggle('show');
+            overlay.classList.toggle('show');
+        }
+
+        function closeProgressPanel() {
+            const panel = document.getElementById('uploadProgressPanel');
+            const overlay = document.getElementById('overlay');
+            panel.classList.remove('show');
+            overlay.classList.remove('show');
+        }
+
+        function addToHistory(item) {
+            uploadHistory.unshift(item);
+            if (uploadHistory.length > 50) {
+                uploadHistory = uploadHistory.slice(0, 50);
+            }
+            localStorage.setItem('uploadHistory', JSON.stringify(uploadHistory));
+        }
+
+        function toggleHistory() {
+            const panel = document.getElementById('historyPanel');
+            panel.classList.toggle('show');
+            if (panel.classList.contains('show')) {
+                renderHistory();
+            }
+        }
+
+        function toggleHistoryFromPanel() {
+            closeProgressPanel();
+            setTimeout(() => toggleHistory(), 100);
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+
+            if (uploadHistory.length === 0) {
+                list.innerHTML = '<div class="history-empty">暂无上传记录</div>';
+                return;
+            }
+
+            list.innerHTML = uploadHistory.map(item => {
+                const date = new Date(item.timestamp);
+                const dateStr = date.toLocaleString('zh-CN');
+                const statusIcon = item.status === 'complete' ? '✓' : '✗';
+                const statusColor = item.status === 'complete' ? '#34C759' : '#FF3B30';
+
+                return `
+                    <div class="history-item">
+                        <div class="history-file-name">${statusIcon} ${item.filename}</div>
+                        <div class="history-file-info">
+                            ${formatSize(item.size)} · ${dateStr}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function clearHistory() {
+            if (confirm('确定要清空所有上传历史吗？')) {
+                uploadHistory = [];
+                localStorage.removeItem('uploadHistory');
+                renderHistory();
+                showToast('历史记录已清空');
+            }
+        }
+
+        async function loadFiles() {
+            try {
+                const res = await fetch('/api/files');
+                const files = await res.json();
+
+                if (files.length === 0) {
+                    document.getElementById('fileList').innerHTML = '<div class="empty">暂无文件</div>';
+                    return;
+                }
+
+                let html = '';
+                files.forEach(f => {
+                    if (!f.is_dir) {
+                        html += `
+                            <div class="file-item" onclick="downloadFile('${f.name}')">
+                                <div class="file-icon">${getIcon(f.name)}</div>
+                                <div class="file-info">
+                                    <div class="file-name">${f.name}</div>
+                                    <div class="file-size">${formatSize(f.size)}</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                document.getElementById('fileList').innerHTML = html;
+            } catch (e) {
+                document.getElementById('fileList').innerHTML = '<div class="empty">加载失败</div>';
+            }
+        }
+
+        function downloadFile(name) {
+            window.location.href = `/api/download?file=${encodeURIComponent(name)}`;
+        }
+
+        // Initialize
+        loadFiles();
+    </script>
+</body>
+</html>

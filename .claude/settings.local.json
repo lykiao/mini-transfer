@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(xxd:*)",
+      "Bash(npm --version:*)",
+      "Bash(cargo:*)",
+      "Bash(curl:*)",
+      "Bash(sh:*)",
+      "Bash(winget install:*)",
+      "Bash(npm install)",
+      "Bash(where cargo)",
+      "Bash(rustc:*)",
+      "Bash(\"$USERPROFILE/.cargo/bin/rustup.exe\":*)",
+      "Bash(export RUSTUP_DIST_SERVER=\"https://mirrors.ustc.edu.cn/rust-static\":*)",
+      "Bash(export:*)",
+      "Bash(\"$USERPROFILE/.cargo/bin/cargo.exe\":*)",
+      "Bash(\"C:\\\\Users\\\\xixi\\\\.cargo\\\\bin\\\\cargo.exe\" --version)",
+      "Bash(\"C:\\\\Users\\\\xixi\\\\.cargo\\\\bin\\\\cargo.exe\" run:*)",
+      "Bash(npm run tauri dev:*)",
+      "Bash(refreshenv:*)",
+      "Bash(where:*)",
+      "Bash(Get-ChildItem \"C:\\\\Program Files \\(x86\\)\\\\Microsoft Visual Studio\\\\2019\\\\Community\\\\VC\\\\Tools\\\\MSVC\" -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object:*)",
+      "Bash(rustup default:*)",
+      "Bash(npx @tauri-apps/cli icon:*)",
+      "Bash(python3:*)",
+      "Bash(powershell.exe:*)",
+      "Bash(npx tauri icon:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(npm run tauri build:*)",
+      "Bash(dir:*)",
+      "Bash(powershell:*)",
+      "Bash(test:*)"
+    ]
+  }
+}

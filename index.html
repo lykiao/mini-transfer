@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>迷你传输助手</title>
+    <link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📁 迷你传输助手</h1>
+
+        <div class="section">
+            <label class="label">选择共享文件夹</label>
+            <button id="selectFolderBtn" class="btn primary">选择文件夹</button>
+            <div id="selectedPath" class="path-display">未选择</div>
+        </div>
+
+        <div id="serverSection" class="section" style="display: none;">
+            <div class="server-layout">
+                <div class="left-panel">
+                    <div class="qr-container">
+                        <div id="qrCode"></div>
+                    </div>
+                    <div id="serverUrl" class="url-display"></div>
+                </div>
+                <div class="right-panel">
+                    <div class="server-info">
+                        <p class="info-title">如何连接？</p>
+                        <p class="info-text">1. 确保手机和电脑在同一 WiFi</p>
+                        <p class="info-text">2. 用手机扫描二维码</p>
+                        <p class="info-text">3. 在浏览器中打开链接</p>
+                    </div>
+                    <button id="stopServerBtn" class="btn danger">停止服务</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="src/main.ts"></script>
+</body>
+</html>
