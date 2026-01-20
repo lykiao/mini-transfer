@@ -12,6 +12,7 @@ use hyper::service::service_fn;
 use hyper::{Request, Response, StatusCode};
 use http_body_util::{Full, BodyExt};
 use hyper_util::rt::TokioIo;
+use percent_encoding::percent_decode;
 use qrcode::QrCode;
 use local_ip_address::local_ip;
 use serde::{Deserialize, Serialize};
@@ -202,12 +203,18 @@ async fn handle_request(
                     })
                     .collect();
 
-                if let Some(filename) = params.get("file") {
-                    let file_path = base_path.join(filename);
+                if let Some(encoded_filename) = params.get("file") {
+                    // URL decode the filename to support Chinese characters
+                    let filename = percent_decode(encoded_filename.as_bytes())
+                        .decode_utf8()
+                        .unwrap_or_else(|_| encoded_filename.as_str().into())
+                        .to_string();
+
+                    let file_path = base_path.join(&filename);
                     if let Ok(contents) = fs::read(&file_path) {
                         return Ok(Response::builder()
                             .header("content-type", "application/octet-stream")
-                            .header("content-disposition", format!("attachment; filename=\"{}\"", filename))
+                            .header("content-disposition", format!("attachment; filename=\"{}\"", encoded_filename))
                             .header("Access-Control-Allow-Origin", "*")
                             .body(Full::new(contents.into()).boxed())
                             .unwrap());
