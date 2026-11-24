@@ -1,5 +1,5 @@
 {
-  "productName": "迷你传输助手",
+  "productName": "迷你互传助手",
   "version": "1.0.0",
   "identifier": "com.mini-transfer.app",
   "build": {
@@ -11,8 +11,8 @@
   "app": {
     "windows": [
       {
-        "title": "迷你传输助手",
-        "width": 420,
+        "title": "迷你互传助手 v1.0.0",
+        "width": 560,
         "height": 600,
         "resizable": false,
         "center": true

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**迷你传输助手** (Mini Transfer Assistant) - A lightweight cross-platform desktop application for file transfer between PC and mobile devices.
+**迷你互传助手** (Mini Transfer Assistant) - A lightweight cross-platform desktop application for file transfer between PC and mobile devices.
 
 **Tech Stack:**
 - **Frontend:** Vanilla TypeScript + Vite
@@ -96,7 +96,7 @@ vite.config.ts            # Vite configuration
 
 - Size: 400×500 (fixed, non-resizable)
 - Centered on screen
-- Title: "迷你传输助手"
+- Title: "迷你互传助手"
 
 ## Reducing Build Size
 

@@ -3,17 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>迷你传输助手</title>
+    <title>迷你互传助手</title>
     <link rel="stylesheet" href="src/style.css">
 </head>
 <body>
     <div class="container">
-        <h1>📁 迷你传输助手</h1>
+        <h1>📁 迷你互传助手 <span id="versionBadge" class="version-badge"></span></h1>
 
         <div class="section">
-            <label class="label">选择共享文件夹</label>
-            <button id="selectFolderBtn" class="btn primary">选择文件夹</button>
-            <div id="selectedPath" class="path-display">未选择</div>
+            <button id="selectFolderBtn" class="btn primary">选择共享文件夹</button>
+            <div class="path-row">
+                <div id="selectedPath" class="path-display">未选择</div>
+                <div class="icon-actions">
+                    <button id="copyPathBtn" class="icon-btn" title="复制路径" type="button" aria-label="复制路径">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                    <button id="openFolderBtn" class="icon-btn" title="打开文件夹" type="button" aria-label="打开文件夹">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="path-hint">
+                <div>・ 要传输的文件放置到以上文件夹中</div>
+                <div>・ 接收的文件存放在子文件夹【来自手机】中</div>
+            </div>
         </div>
 
         <div id="serverSection" class="section" style="display: none;">
@@ -22,7 +35,12 @@
                     <div class="qr-container">
                         <div id="qrCode"></div>
                     </div>
-                    <div id="serverUrl" class="url-display"></div>
+                    <div class="url-row">
+                        <div id="serverUrl" class="url-display"></div>
+                        <button id="copyUrlBtn" class="icon-btn" title="复制链接" type="button" aria-label="复制链接">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        </button>
+                    </div>
                 </div>
                 <div class="right-panel">
                     <div class="server-info">

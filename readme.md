@@ -1,4 +1,4 @@
-# 迷你传输助手 (Mini Transfer Assistant)
+# 迷你互传助手 (Mini Transfer Assistant)
 
 一个轻量级的跨平台桌面应用程序，用于在 PC 和移动设备之间进行文件传输。
 

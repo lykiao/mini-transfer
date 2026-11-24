@@ -1,5 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
+import { getVersion } from "@tauri-apps/api/app";
 import { open } from "@tauri-apps/plugin-dialog";
+import { open as shellOpen } from "@tauri-apps/plugin-shell";
 import { listen } from "@tauri-apps/api/event";
 
 const selectFolderBtn = document.getElementById("selectFolderBtn") as HTMLButtonElement;
@@ -8,8 +10,66 @@ const serverSection = document.getElementById("serverSection") as HTMLDivElement
 const qrCode = document.getElementById("qrCode") as HTMLDivElement;
 const serverUrl = document.getElementById("serverUrl") as HTMLDivElement;
 const stopServerBtn = document.getElementById("stopServerBtn") as HTMLButtonElement;
+const versionBadge = document.getElementById("versionBadge") as HTMLSpanElement;
+const copyPathBtn = document.getElementById("copyPathBtn") as HTMLButtonElement;
+const openFolderBtn = document.getElementById("openFolderBtn") as HTMLButtonElement;
+const copyUrlBtn = document.getElementById("copyUrlBtn") as HTMLButtonElement;
 
 let currentPath: string | null = null;
+
+// 在标题栏显示当前应用版本号
+getVersion()
+    .then((version) => { versionBadge.textContent = `v${version}`; })
+    .catch(() => { versionBadge.textContent = ''; });
+
+// 复制文本到剪贴板（含降级方案，兼容不同 WebView 环境）
+async function copyText(text: string, successMsg: string) {
+    try {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(text);
+        } else {
+            // 降级：临时 textarea + execCommand
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.cssText = 'position:fixed;opacity:0;left:-9999px;';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+        }
+        showToast(successMsg);
+    } catch (e) {
+        console.error('复制失败:', e);
+        showToast('复制失败');
+    }
+}
+
+copyPathBtn.addEventListener('click', () => {
+    if (!currentPath) {
+        showToast('请先选择共享文件夹');
+        return;
+    }
+    copyText(currentPath, '路径已复制');
+});
+
+openFolderBtn.addEventListener('click', async () => {
+    if (!currentPath) {
+        showToast('请先选择共享文件夹');
+        return;
+    }
+    try {
+        await shellOpen(currentPath);
+    } catch (e) {
+        console.error('打开文件夹失败:', e);
+        showToast('打开文件夹失败');
+    }
+});
+
+copyUrlBtn.addEventListener('click', () => {
+    const url = serverUrl.textContent?.trim();
+    if (!url) return;
+    copyText(url, '链接已复制');
+});
 
 // 记住上次成功启动服务的共享文件夹路径
 const LAST_FOLDER_KEY = 'mini-transfer:lastFolder';
