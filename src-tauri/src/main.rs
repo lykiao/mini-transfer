@@ -12,7 +12,7 @@ use hyper::service::service_fn;
 use hyper::{Request, Response, StatusCode};
 use http_body_util::{Full, BodyExt};
 use hyper_util::rt::TokioIo;
-use percent_encoding::percent_decode;
+use percent_encoding::{percent_decode, percent_encode, NON_ALPHANUMERIC};
 use qrcode::QrCode;
 use local_ip_address::local_ip;
 use serde::{Deserialize, Serialize};
@@ -153,6 +153,47 @@ async fn run_server(port: u16, shared_folder: Arc<Mutex<Option<PathBuf>>>, app_h
     }
 }
 
+/// 解析 application/x-www-form-urlencoded 风格的参数值：
+/// 先把 `+` 还原为空格，再做百分号解码，兼容 encodeURIComponent 与其它客户端。
+fn decode_form_value(raw: &str) -> String {
+    let plus_replaced = raw.replace('+', " ");
+    percent_decode(plus_replaced.as_bytes())
+        .decode_utf8()
+        .map(|cow| cow.into_owned())
+        .unwrap_or_else(|_| plus_replaced)
+}
+
+/// 生成符合 RFC 6266 的 Content-Disposition。
+/// filename 用纯 ASCII 兜底，filename* 携带 UTF-8 百分号编码，浏览器据此显示正确的中文名。
+/// 注意：HTTP 头值不允许出现非 ASCII 字节，直接把中文塞进 header 会导致 unwrap() panic。
+fn build_content_disposition(filename: &str) -> String {
+    let ascii_fallback: String = filename
+        .chars()
+        .map(|c| {
+            if c.is_ascii() && !c.is_control() && c != '"' && c != '\\' {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect();
+    format!(
+        "attachment; filename=\"{}\"; filename*=UTF-8''{}",
+        ascii_fallback,
+        percent_encode(filename.as_bytes(), NON_ALPHANUMERIC)
+    )
+}
+
+/// 只允许不含路径跳转的纯相对文件名，避免 `../` 越权读取共享目录之外的文件。
+fn is_safe_relative_name(name: &str) -> bool {
+    let path = std::path::Path::new(name);
+    !name.is_empty()
+        && !path.is_absolute()
+        && path
+            .components()
+            .all(|c| matches!(c, std::path::Component::Normal(_)))
+}
+
 async fn handle_request(
     req: Request<hyper::body::Incoming>,
     shared_folder: Arc<Mutex<Option<PathBuf>>>,
@@ -195,26 +236,33 @@ async fn handle_request(
         }
         ("GET", p) if p.starts_with("/api/download") => {
             if let Some(query) = uri.query() {
+                // splitn(2, '=') 保证文件名本身含 '=' 时不会被截断
                 let params: HashMap<String, String> = query
                     .split('&')
                     .filter_map(|s| {
-                        let mut parts = s.split('=');
+                        let mut parts = s.splitn(2, '=');
                         Some((parts.next()?.to_string(), parts.next()?.to_string()))
                     })
                     .collect();
 
                 if let Some(encoded_filename) = params.get("file") {
-                    // URL decode the filename to support Chinese characters
-                    let filename = percent_decode(encoded_filename.as_bytes())
-                        .decode_utf8()
-                        .unwrap_or_else(|_| encoded_filename.as_str().into())
-                        .to_string();
+                    // 移动端 encodeURIComponent 后是百分号编码，先解码还原真实文件名
+                    let filename = decode_form_value(encoded_filename);
+
+                    // 拦截 ../ 等路径穿越，只允许共享目录内的普通文件名
+                    if !is_safe_relative_name(&filename) {
+                        return Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Full::new("Invalid filename".into()).boxed())
+                            .unwrap());
+                    }
 
                     let file_path = base_path.join(&filename);
                     if let Ok(contents) = fs::read(&file_path) {
                         return Ok(Response::builder()
                             .header("content-type", "application/octet-stream")
-                            .header("content-disposition", format!("attachment; filename=\"{}\"", encoded_filename))
+                            // 用解码后的真实文件名生成 header，浏览器才能显示正确的中文名
+                            .header("content-disposition", build_content_disposition(&filename))
                             .header("Access-Control-Allow-Origin", "*")
                             .body(Full::new(contents.into()).boxed())
                             .unwrap());

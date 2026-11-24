@@ -699,8 +699,9 @@
                 let html = '';
                 files.forEach(f => {
                     if (!f.is_dir) {
+                        // 用 data 属性 + 事件委托传递文件名，避免内联字符串拼接被特殊字符破坏
                         html += `
-                            <div class="file-item" onclick="downloadFile('${f.name}')">
+                            <div class="file-item" data-download="${encodeURIComponent(f.name)}">
                                 <div class="file-icon">${getIcon(f.name)}</div>
                                 <div class="file-info">
                                     <div class="file-name">${f.name}</div>
@@ -710,14 +711,39 @@
                         `;
                     }
                 });
-                document.getElementById('fileList').innerHTML = html;
+                const listEl = document.getElementById('fileList');
+                listEl.innerHTML = html;
+                listEl.querySelectorAll('[data-download]').forEach(el => {
+                    el.addEventListener('click', () => {
+                        downloadFile(decodeURIComponent(el.getAttribute('data-download')));
+                    });
+                });
             } catch (e) {
                 document.getElementById('fileList').innerHTML = '<div class="empty">加载失败</div>';
             }
         }
 
-        function downloadFile(name) {
-            window.location.href = `/api/download?file=${encodeURIComponent(name)}`;
+        async function downloadFile(name) {
+            try {
+                const res = await fetch(`/api/download?file=${encodeURIComponent(name)}`);
+                if (!res.ok) {
+                    showToast('下载失败：文件不存在');
+                    return;
+                }
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                // a.download 直接用原始文件名，浏览器保存时即为正确的中文名
+                a.download = name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                console.error('Download error:', e);
+                showToast('下载失败：' + e.message);
+            }
         }
 
         // Initialize
