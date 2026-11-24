@@ -11,6 +11,56 @@ const stopServerBtn = document.getElementById("stopServerBtn") as HTMLButtonElem
 
 let currentPath: string | null = null;
 
+// 记住上次成功启动服务的共享文件夹路径
+const LAST_FOLDER_KEY = 'mini-transfer:lastFolder';
+
+function saveLastFolder(path: string) {
+    try {
+        localStorage.setItem(LAST_FOLDER_KEY, path);
+    } catch (e) {
+        console.warn('无法保存上次文件夹:', e);
+    }
+}
+
+function clearLastFolder() {
+    try {
+        localStorage.removeItem(LAST_FOLDER_KEY);
+    } catch (e) {
+        console.warn('无法清除上次文件夹:', e);
+    }
+}
+
+async function restoreLastFolder() {
+    let savedPath: string | null = null;
+    try {
+        savedPath = localStorage.getItem(LAST_FOLDER_KEY);
+    } catch (e) {
+        console.warn('无法读取上次文件夹:', e);
+        return;
+    }
+    if (!savedPath) return;
+
+    // 前端无法可靠判断本机路径是否存在，交给后端校验
+    let stillExists = false;
+    try {
+        stillExists = await invoke<boolean>('validate_folder', { folderPath: savedPath });
+    } catch (e) {
+        console.error('校验上次文件夹失败:', e);
+    }
+
+    if (stillExists) {
+        currentPath = savedPath;
+        selectedPath.textContent = savedPath;
+        showToast('已恢复上次的共享文件夹');
+        await startServer(savedPath);
+    } else {
+        // 原文件夹已被删除或移动，清空记录并显示空
+        clearLastFolder();
+        selectedPath.textContent = '未选择';
+        showToast('上次的共享文件夹已不存在，请重新选择');
+    }
+}
+
 // Listen for file upload events
 listen<{ filename: string; size: number }>('file-received', (event) => {
     const { filename, size } = event.payload;
@@ -62,6 +112,8 @@ selectFolderBtn.addEventListener("click", async () => {
             currentPath = selected;
             selectedPath.textContent = selected;
             await startServer(selected);
+            // 无论启动是否成功都记住选择；若路径无效下次启动会自动清理
+            saveLastFolder(selected);
         }
     } catch (error) {
         console.error("Error selecting folder:", error);
@@ -99,3 +151,6 @@ async function startServer(folderPath: string) {
         qrCode.innerHTML = '<div class="error">启动失败，请重试</div>';
     }
 }
+
+// 启动时尝试恢复上次的共享文件夹
+restoreLastFolder();

@@ -89,6 +89,13 @@ async fn stop_server(state: tauri::State<'_, AppState>) -> Result<(), String> {
     Ok(())
 }
 
+/// 检查本机路径是否仍然存在且为文件夹，供前端启动时判断能否复用上次的共享目录。
+#[tauri::command]
+fn validate_folder(folder_path: String) -> bool {
+    let path = PathBuf::from(&folder_path);
+    path.exists() && path.is_dir()
+}
+
 #[tauri::command]
 async fn generate_qr_code(url: String) -> Result<String, String> {
     let qr = QrCode::new(&url).map_err(|e| e.to_string())?;
@@ -765,6 +772,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             start_server,
             stop_server,
+            validate_folder,
             generate_qr_code
         ])
         .run(tauri::generate_context!())
