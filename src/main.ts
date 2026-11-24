@@ -9,13 +9,14 @@ const selectedPath = document.getElementById("selectedPath") as HTMLDivElement;
 const serverSection = document.getElementById("serverSection") as HTMLDivElement;
 const qrCode = document.getElementById("qrCode") as HTMLDivElement;
 const serverUrl = document.getElementById("serverUrl") as HTMLDivElement;
-const stopServerBtn = document.getElementById("stopServerBtn") as HTMLButtonElement;
+const serverToggleBtn = document.getElementById("serverToggleBtn") as HTMLButtonElement;
 const versionBadge = document.getElementById("versionBadge") as HTMLSpanElement;
 const copyPathBtn = document.getElementById("copyPathBtn") as HTMLButtonElement;
 const openFolderBtn = document.getElementById("openFolderBtn") as HTMLButtonElement;
 const copyUrlBtn = document.getElementById("copyUrlBtn") as HTMLButtonElement;
 
 let currentPath: string | null = null;
+let isServerRunning = false;
 
 // 在标题栏显示当前应用版本号
 getVersion()
@@ -180,13 +181,27 @@ selectFolderBtn.addEventListener("click", async () => {
     }
 });
 
-stopServerBtn.addEventListener("click", async () => {
-    try {
-        await invoke("stop_server");
-        serverSection.style.display = "none";
-        currentPath = null;
-    } catch (error) {
-        console.error("Error stopping server:", error);
+serverToggleBtn.addEventListener("click", async () => {
+    if (isServerRunning) {
+        // 停止服务：只清空二维码与 URL 内容，保留文件夹和区域，方便再次启动
+        try {
+            await invoke("stop_server");
+            isServerRunning = false;
+            qrCode.innerHTML = '<div class="stopped">服务已停止</div>';
+            serverUrl.textContent = '';
+            serverToggleBtn.textContent = '启动服务';
+            serverToggleBtn.className = 'btn success';
+            showToast('服务已停止，可随时重新启动');
+        } catch (error) {
+            console.error("Error stopping server:", error);
+        }
+    } else {
+        // 重新启动：复用当前选中的文件夹，无需重启应用
+        if (!currentPath) {
+            showToast('请先选择共享文件夹');
+            return;
+        }
+        await startServer(currentPath);
     }
 });
 
@@ -194,6 +209,7 @@ async function startServer(folderPath: string) {
     try {
         qrCode.innerHTML = '<div class="loading">正在启动服务...</div>';
         serverSection.style.display = "block";
+        serverToggleBtn.disabled = true;
 
         const serverInfo = await invoke<{ url: string; port: number }>("start_server", {
             folderPath
@@ -206,9 +222,14 @@ async function startServer(folderPath: string) {
         });
 
         qrCode.innerHTML = `<img src="${qrDataUrl}" alt="QR Code">`;
+        serverToggleBtn.textContent = '停止服务';
+        serverToggleBtn.className = 'btn danger';
+        isServerRunning = true;
     } catch (error) {
         console.error("Error starting server:", error);
         qrCode.innerHTML = '<div class="error">启动失败，请重试</div>';
+    } finally {
+        serverToggleBtn.disabled = false;
     }
 }
 

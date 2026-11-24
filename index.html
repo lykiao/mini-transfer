@@ -31,26 +31,23 @@
 
         <div id="serverSection" class="section" style="display: none;">
             <div class="server-layout">
-                <div class="left-panel">
-                    <div class="qr-container">
-                        <div id="qrCode"></div>
-                    </div>
-                    <div class="url-row">
-                        <div id="serverUrl" class="url-display"></div>
-                        <button id="copyUrlBtn" class="icon-btn" title="复制链接" type="button" aria-label="复制链接">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                        </button>
-                    </div>
+                <div class="qr-container">
+                    <div id="qrCode"></div>
                 </div>
-                <div class="right-panel">
-                    <div class="server-info">
-                        <p class="info-title">如何连接？</p>
-                        <p class="info-text">1. 确保手机和电脑在同一 WiFi</p>
-                        <p class="info-text">2. 用手机扫描二维码</p>
-                        <p class="info-text">3. 在浏览器中打开链接</p>
-                    </div>
-                    <button id="stopServerBtn" class="btn danger">停止服务</button>
+                <div id="connectGuide" class="server-info">
+                    <p class="info-title">如何连接？</p>
+                    <p class="info-text">1. 确保手机和电脑在同一 WiFi</p>
+                    <p class="info-text">2. 启动服务</p>
+                    <p class="info-text">3. 用手机扫描二维码</p>
+                    <p class="info-text">4. 在浏览器中打开链接</p>
                 </div>
+                <div class="url-row">
+                    <div id="serverUrl" class="url-display"></div>
+                    <button id="copyUrlBtn" class="icon-btn" title="复制链接" type="button" aria-label="复制链接">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                </div>
+                <button id="serverToggleBtn" class="btn danger">停止服务</button>
             </div>
         </div>
     </div>

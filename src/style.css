@@ -76,6 +76,22 @@ h1 {
     transform: translateY(0);
 }
 
+/* 启动服务：绿色，表示可启动 / 运行中可停止的反向操作 */
+.btn.success {
+    background: #10b981;
+    color: white;
+    padding: 8px 12px;
+}
+
+.btn.success:hover {
+    background: #059669;
+    transform: translateY(-1px);
+}
+
+.btn.success:active {
+    transform: translateY(0);
+}
+
 .btn.danger {
     background: #ff6b6b;
     color: white;
@@ -96,29 +112,32 @@ h1 {
 .path-display {
     flex: 1;
     min-width: 0;
+    min-height: 36px;
     display: flex;
     align-items: center;
-    padding: 10px 12px;
+    padding: 8px 10px;
     background: #f5f5f5;
     border-radius: 8px;
     font-size: 13px;
+    line-height: 1.4;
     color: #666;
     word-break: break-all;
 }
 
+/* 两个图标按钮横向并排，不再纵向堆叠撑高路径框 */
 .icon-actions {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
+    flex-direction: row;
+    gap: 6px;
+    flex-shrink: 0;
 }
 
 .icon-btn {
-    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 34px;
-    min-height: 24px;
+    width: 36px;
+    height: 36px;
     padding: 4px;
     border: none;
     border-radius: 8px;
@@ -153,16 +172,25 @@ h1 {
     line-height: 1.9;
 }
 
-.url-row {
-    display: flex;
-    align-items: stretch;
-    gap: 8px;
+/* 两行两列：第1行二维码/说明，第2行URL/按钮，同行元素自然对齐 */
+.server-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 16px;
+    align-items: start;
 }
 
 .qr-container {
     display: flex;
     justify-content: center;
-    margin-bottom: 20px;
+}
+
+#qrCode {
+    min-height: 156px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #qrCode img {
@@ -172,46 +200,50 @@ h1 {
     border: 3px solid #f0f0f0;
 }
 
+.url-row {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+    min-width: 0;
+}
+
 .url-display {
     flex: 1;
     min-width: 0;
+    min-height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
-    font-size: 14px;
+    font-size: 13px;
     color: #666;
-    padding: 10px;
+    padding: 8px 10px;
     background: #f5f5f5;
     border-radius: 8px;
     word-break: break-all;
 }
 
-/* 两列等宽：左侧二维码区与右侧说明区宽度一致 */
-.server-layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    align-items: center;
+/* 单图标按钮：固定尺寸，与路径框/URL 框同高，不被 flex 拉伸变形 */
+.url-row .icon-btn {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 36px;
+    border-radius: 8px;
 }
 
-.left-panel {
-    min-width: 0;
-}
-
-.right-panel {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+/* 底部按钮与 URL 行等高对齐 */
+.server-layout > .btn {
+    align-self: stretch;
+    white-space: nowrap;
 }
 
 .server-info {
     background: #f8f9fa;
-    padding: 16px;
+    padding: 14px 16px;
     border-radius: 10px;
     border-left: 3px solid #667eea;
     font-size: 12px;
+    align-self: stretch;
 }
 
 .info-title {
@@ -238,6 +270,23 @@ h1 {
     text-align: center;
     color: #ff6b6b;
     padding: 20px;
+}
+
+.stopped {
+    text-align: center;
+    color: #aaa;
+    font-size: 14px;
+    padding: 40px 0;
+    border: 2px dashed #e0e0e0;
+    border-radius: 10px;
+    width: 150px;
+    box-sizing: border-box;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
 }
 
 @keyframes slideDown {

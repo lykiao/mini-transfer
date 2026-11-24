@@ -13,7 +13,7 @@
       {
         "title": "迷你互传助手 v1.0.0",
         "width": 560,
-        "height": 600,
+        "height": 612,
         "resizable": false,
         "center": true
       }
@@ -27,5 +27,9 @@
     "targets": ["nsis"],
     "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"]
   },
-  "plugins": {}
+  "plugins": {
+    "shell": {
+      "open": "((mailto|tel|https?|file):\\/\\/|[A-Za-z]:\\\\|\\\\\\\\|\\/).+"
+    }
+  }
 }
