@@ -140,23 +140,51 @@ async fn run_server(port: u16, shared_folder: Arc<Mutex<Option<PathBuf>>>, app_h
     let addr: SocketAddr = format!("0.0.0.0:{}", port).parse().unwrap();
     let listener = TcpListener::bind(addr).await.unwrap();
 
-    while let Ok((stream, _)) = listener.accept().await {
-        let io = TokioIo::new(stream);
-        let shared_folder = shared_folder.clone();
-        let app_handle = app_handle.clone();
+    // 每 10 秒检测一次共享文件夹是否仍存在，覆盖"无人访问"时被删除的场景。
+    // 检测到消失时发出与请求拦截相同的 folder-missing 事件，直接复用前端既有处理逻辑。
+    let mut ticker = tokio::time::interval(tokio::time::Duration::from_secs(10));
 
-        tokio::spawn(async move {
-            let service = service_fn(move |req| {
-                handle_request(req, shared_folder.clone(), app_handle.clone())
-            });
+    loop {
+        tokio::select! {
+            accept_result = listener.accept() => {
+                let (stream, _) = match accept_result {
+                    Ok(v) => v,
+                    Err(_) => break,
+                };
+                let io = TokioIo::new(stream);
+                let shared_folder = shared_folder.clone();
+                let app_handle = app_handle.clone();
 
-            if let Err(err) = http1::Builder::new()
-                .serve_connection(io, service)
-                .await
-            {
-                eprintln!("Error serving connection: {:?}", err);
+                tokio::spawn(async move {
+                    let service = service_fn(move |req| {
+                        handle_request(req, shared_folder.clone(), app_handle.clone())
+                    });
+
+                    if let Err(err) = http1::Builder::new()
+                        .serve_connection(io, service)
+                        .await
+                    {
+                        eprintln!("Error serving connection: {:?}", err);
+                    }
+                });
             }
-        });
+            _ = ticker.tick() => {
+                let folder = {
+                    let guard = shared_folder.lock().unwrap();
+                    guard.clone()
+                };
+                // None 表示服务已停止，跳过检测，避免与 stop_server 的竞态误判
+                if let Some(p) = folder {
+                    if !p.exists() || !p.is_dir() {
+                        let _ = app_handle.emit("folder-missing", serde_json::json!({
+                            "path": p.to_string_lossy()
+                        }));
+                        // 目录已失效，退出监听循环；前端收到事件后会清理并提示重选
+                        break;
+                    }
+                }
+            }
+        }
     }
 }
 
