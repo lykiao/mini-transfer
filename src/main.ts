@@ -18,6 +18,23 @@ const copyUrlBtn = document.getElementById("copyUrlBtn") as HTMLButtonElement;
 let currentPath: string | null = null;
 let isServerRunning = false;
 
+// 按钮状态完全由 currentPath / isServerRunning 驱动，与"是否初次启动"无关
+function updateToggleButton() {
+    if (isServerRunning) {
+        serverToggleBtn.textContent = '停止服务';
+        serverToggleBtn.className = 'btn danger';
+        serverToggleBtn.disabled = false;
+    } else if (currentPath) {
+        serverToggleBtn.textContent = '启动服务';
+        serverToggleBtn.className = 'btn success';
+        serverToggleBtn.disabled = false;
+    } else {
+        serverToggleBtn.textContent = '启动服务';
+        serverToggleBtn.className = 'btn success';
+        serverToggleBtn.disabled = true;
+    }
+}
+
 // 在标题栏显示当前应用版本号
 getVersion()
     .then((version) => { versionBadge.textContent = `v${version}`; })
@@ -189,9 +206,8 @@ serverToggleBtn.addEventListener("click", async () => {
             isServerRunning = false;
             qrCode.innerHTML = '<div class="stopped">服务已停止</div>';
             serverUrl.textContent = '';
-            serverToggleBtn.textContent = '启动服务';
-            serverToggleBtn.className = 'btn success';
             showToast('服务已停止，可随时重新启动');
+            updateToggleButton();
         } catch (error) {
             console.error("Error stopping server:", error);
         }
@@ -222,16 +238,16 @@ async function startServer(folderPath: string) {
         });
 
         qrCode.innerHTML = `<img src="${qrDataUrl}" alt="QR Code">`;
-        serverToggleBtn.textContent = '停止服务';
-        serverToggleBtn.className = 'btn danger';
         isServerRunning = true;
     } catch (error) {
         console.error("Error starting server:", error);
         qrCode.innerHTML = '<div class="error">启动失败，请重试</div>';
     } finally {
-        serverToggleBtn.disabled = false;
+        // 按当前状态恢复：运行中→红色「停止服务」，有路径未运行→绿色「启动服务」可重试
+        updateToggleButton();
     }
 }
 
-// 启动时尝试恢复上次的共享文件夹
+// 先按当前状态刷新按钮，再尝试恢复上次的共享文件夹（恢复成功会自动启动服务）
+updateToggleButton();
 restoreLastFolder();
