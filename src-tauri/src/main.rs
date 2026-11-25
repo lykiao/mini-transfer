@@ -219,10 +219,24 @@ async fn handle_request(
             drop(folder);
             return Ok(Response::builder()
                 .status(StatusCode::SERVICE_UNAVAILABLE)
-                .body(Full::new("No folder selected".into()).boxed())
+                .header("Access-Control-Allow-Origin", "*")
+                .body(Full::new(
+                    serde_json::json!({"success": false, "error": "未选择共享文件夹"}).to_string().into(),
+                ).boxed())
                 .unwrap());
         }
     };
+
+    // 共享文件夹在服务运行期间可能被删除/移动。此前的逻辑只在启动时校验一次，
+    // 运行期若目录消失：列表返回空、下载 404、上传更会被 create_dir_all 静默重建目录。
+    // 对 API 请求统一校验，目录不存在时明确报错并通知前端，同时阻止任何重建。
+    // 首页 HTML 不受影响，保证手机端仍能打开页面看到错误提示。
+    let folder_missing = !base_path.exists() || !base_path.is_dir();
+    if folder_missing {
+        let _ = app_handle.emit("folder-missing", serde_json::json!({
+            "path": base_path.to_string_lossy()
+        }));
+    }
 
     match (method.as_str(), path) {
         ("GET", "/") => {
@@ -230,6 +244,16 @@ async fn handle_request(
             Ok(Response::builder()
                 .header("content-type", "text/html; charset=utf-8")
                 .body(Full::new(html.into()).boxed())
+                .unwrap())
+        }
+        (_, p) if folder_missing && p.starts_with("/api/") => {
+            Ok(Response::builder()
+                .status(StatusCode::SERVICE_UNAVAILABLE)
+                .header("content-type", "application/json")
+                .header("Access-Control-Allow-Origin", "*")
+                .body(Full::new(
+                    serde_json::json!({"success": false, "error": "共享文件夹已不存在，请在电脑端重新选择"}).to_string().into(),
+                ).boxed())
                 .unwrap())
         }
         ("GET", "/api/files") => {

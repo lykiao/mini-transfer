@@ -170,6 +170,24 @@ listen<{ filename: string; size: number }>('file-received', (event) => {
     showToast(`📱 收到文件：${filename} (${sizeStr})`);
 });
 
+// 后端检测到共享文件夹在运行期间被删除/移动时通知前端，自动清理状态并提示重选
+listen('folder-missing', async () => {
+    if (!currentPath) return;
+    try {
+        await invoke("stop_server");
+    } catch (error) {
+        console.error("停止服务失败:", error);
+    }
+    isServerRunning = false;
+    currentPath = null;
+    clearLastFolder();
+    selectedPath.textContent = '未选择';
+    qrCode.innerHTML = '<div class="stopped">共享文件夹已不存在</div>';
+    serverUrl.textContent = '';
+    updateToggleButton();
+    showToast('共享文件夹已不存在，请重新选择');
+});
+
 function formatSize(bytes: number): string {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
