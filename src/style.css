@@ -152,6 +152,17 @@ h1 {
     color: white;
 }
 
+/* 清空按钮用红色系，与普通操作区分 */
+.icon-btn-clear {
+    background: #ffeef0;
+    color: #ff6b6b;
+}
+
+.icon-btn-clear:hover {
+    background: #ff6b6b;
+    color: white;
+}
+
 .icon-btn:active {
     transform: scale(0.94);
 }

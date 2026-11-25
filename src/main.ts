@@ -13,6 +13,7 @@ const serverToggleBtn = document.getElementById("serverToggleBtn") as HTMLButton
 const versionBadge = document.getElementById("versionBadge") as HTMLSpanElement;
 const copyPathBtn = document.getElementById("copyPathBtn") as HTMLButtonElement;
 const openFolderBtn = document.getElementById("openFolderBtn") as HTMLButtonElement;
+const clearPathBtn = document.getElementById("clearPathBtn") as HTMLButtonElement;
 const copyUrlBtn = document.getElementById("copyUrlBtn") as HTMLButtonElement;
 
 let currentPath: string | null = null;
@@ -81,6 +82,29 @@ openFolderBtn.addEventListener('click', async () => {
         console.error('打开文件夹失败:', e);
         showToast('打开文件夹失败');
     }
+});
+
+clearPathBtn.addEventListener('click', async () => {
+    if (!currentPath) {
+        showToast('当前未选择共享文件夹');
+        return;
+    }
+    try {
+        // 服务运行中则一并停止，避免后端继续共享已清空的目录
+        if (isServerRunning) {
+            await invoke("stop_server");
+            isServerRunning = false;
+        }
+    } catch (error) {
+        console.error("停止服务失败:", error);
+    }
+    currentPath = null;
+    selectedPath.textContent = '未选择';
+    clearLastFolder();
+    qrCode.innerHTML = '<div class="stopped">请先选择共享文件夹</div>';
+    serverUrl.textContent = '';
+    updateToggleButton();
+    showToast('已清空共享文件夹');
 });
 
 copyUrlBtn.addEventListener('click', () => {
@@ -239,6 +263,7 @@ async function startServer(folderPath: string) {
 
         qrCode.innerHTML = `<img src="${qrDataUrl}" alt="QR Code">`;
         isServerRunning = true;
+        showToast('服务启动成功，可用手机扫码连接');
     } catch (error) {
         console.error("Error starting server:", error);
         qrCode.innerHTML = '<div class="error">启动失败，请重试</div>';
